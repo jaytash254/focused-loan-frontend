@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FOCUSED BUDDIES – Manual Loan Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#e3f2fd;         /* light blue page background */
+      --panel:#f3f8ff;      /* very light blue cards/sidebar background */
+      --panel-2:#e8f4f8;    /* light blue header */
+      --text:#1a365d;       /* dark blue text */
+      --muted:#4a6b82;      /* medium blue muted text */
+      --accent:#22c55e;     /* green */
+      --accent-2:#2196f3;   /* blue */
+      --warn:#ff9800;       /* orange */
+      --danger:#f44336;     /* red */
+      --border:#b3d9ff;     /* light blue borders */
+      --shadow: 0 10px 25px rgba(0,0,0,.1);
+      --shadow-hover: 0 20px 40px rgba(0,0,0,.15);
+      --shadow-card: 0 4px 15px rgba(0,0,0,.08);
+      --radius: 18px;
+      --gradient-primary: linear-gradient(135deg, var(--accent-2), var(--accent));
+      --gradient-card: linear-gradient(180deg, #f8fbff 0%, #f0f7ff 100%);
+      --gradient-sidebar: linear-gradient(180deg, #f5f9ff, #f0f7ff);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background: radial-gradient(1200px 700px at 10% -10%, #cce7ff 0%, var(--bg) 40%), var(--bg);
+      color:var(--text); overflow-x:hidden;
+    }
+
+    /* Smooth transitions */
+    *{transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);}
+    
+    /* Scrollbar styling */
+    ::-webkit-scrollbar{width:8px}
+    ::-webkit-scrollbar-track{background:var(--bg)}
+    ::-webkit-scrollbar-thumb{background:var(--accent-2); border-radius:4px; opacity:0.7}
+    ::-webkit-scrollbar-thumb:hover{background:var(--accent-2); opacity:1}
+
+    /* Layout */
+    .app{
+      display:grid;
+      grid-template-columns: 280px 1fr;
+      min-height:100vh;
+    }
+
+    /* Sidebar */
+    .sidebar{
+      background:var(--gradient-sidebar);
+      padding:20px 16px; position:sticky; top:0; height:100vh; border-right:1px solid var(--border);
+      backdrop-filter:blur(10px); overflow-y:auto;
+    }
+    .brand{display:flex; align-items:center; gap:12px; padding:12px 16px; margin-bottom:24px; position:relative;
+      background:rgba(255,255,255,0.6); border-radius:16px; border:1px solid rgba(255,255,255,0.8);
+      box-shadow:var(--shadow-card);
+    }
+    .brand .logo{width:40px;height:40px;border-radius:12px; display:grid; place-items:center; 
+      background:var(--gradient-primary); box-shadow:var(--shadow-card); font-weight:800; color:#031016;
+      position:relative; overflow:hidden;
+    }
+    .brand .logo::before{content:''; position:absolute; inset:-2px; background:var(--gradient-primary); z-index:-1;
+      border-radius:14px; opacity:0.3; filter:blur(8px);
+    }
+    .brand h1{font-size:20px;margin:0; font-weight:700; letter-spacing:-0.02em;}
+
+    .nav{display:flex; flex-direction:column; gap:8px; margin-top:12px}
+    .nav button{
+      width:100%; text-align:left; background:transparent; border:1px solid transparent;
+      color:var(--text); padding:14px 16px; border-radius:16px; font-weight:600; cursor:pointer;
+      display:flex; align-items:center; gap:12px; font-size:14px; position:relative;
+    }
+    .nav button:hover{background:rgba(255,255,255,0.7); transform:translateX(4px);}
+    .nav button.active{background:rgba(33,150,243,0.15); border-color:rgba(33,150,243,0.3); 
+      box-shadow:var(--shadow-card); color:var(--accent-2); font-weight:700;}
+    .nav button.active::before{content:''; position:absolute; left:0; top:50%; transform:translateY(-50%);
+      width:4px; height:20px; background:var(--accent); border-radius:0 2px 2px 0;}
+    .nav button i{width:18px; text-align:center; font-size:16px;}
+
+    .sidebar .section{margin-top:28px; margin-bottom:12px; font-size:11px; color:var(--muted); 
+      letter-spacing:.1em; text-transform:uppercase; font-weight:700; padding:0 16px;
+      position:relative;}
+    .sidebar .section::after{content:''; position:absolute; bottom:-6px; left:16px; right:16px;
+      height:1px; background:linear-gradient(90deg, var(--muted) 0%, transparent 100%); opacity:0.3;}
+
+    /* Header */
+    header{
+      position:sticky; top:0; z-index:20; background:linear-gradient(180deg, var(--panel-2), rgba(232,244,248,.9));
+      backdrop-filter:saturate(140%) blur(12px); border-bottom:1px solid var(--border);
+    }
+    .topbar{display:flex; align-items:center; justify-content:space-between; padding:20px 28px}
+    .topbar .title{font-weight:800; letter-spacing:-0.02em; font-size:24px;
+      background:var(--gradient-primary); -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+      background-clip:text;}
+    .search{display:flex; align-items:center; gap:12px; background:rgba(255,255,255,0.8); 
+      border:1px solid rgba(255,255,255,0.9); padding:12px 16px; border-radius:14px; min-width:320px;
+      backdrop-filter:blur(10px); position:relative; box-shadow:var(--shadow-card);}
+    .search:focus-within{border-color:var(--accent-2); box-shadow:0 0 0 4px rgba(33,150,243,0.1);}
+    .search input{background:transparent; border:none; outline:none; color:var(--text); width:100%; font-size:14px;}
+    .search input::placeholder{color:var(--muted); opacity:0.7;}
+    .search i{color:var(--muted); font-size:16px;}
+
+    /* Main */
+    main{padding:28px; animation:fadeInUp 0.6s ease-out;}
+    
+    @keyframes fadeInUp{
+      from{opacity:0; transform:translateY(30px)}
+      to{opacity:1; transform:translateY(0)}
+    }
+    @keyframes slideIn{
+      from{opacity:0; transform:translateX(-20px)}
+      to{opacity:1; transform:translateX(0)}
+    }
+    @keyframes scaleIn{
+      from{opacity:0; transform:scale(0.9)}
+      to{opacity:1; transform:scale(1)}
+    }
+
+    .grid{display:grid; gap:24px}
+    .grid.cards{grid-template-columns: repeat(auto-fit, minmax(280px,1fr))}
+    @media (max-width:1200px){ .grid.cards{grid-template-columns: repeat(2, minmax(260px,1fr))} }
+    @media (max-width:800px){ .app{grid-template-columns: 1fr} .sidebar{position:relative;height:auto} 
+      .grid.cards{grid-template-columns: 1fr} .search{min-width:200px} }
+
+    .card{background:var(--gradient-card); padding:24px; border-radius:var(--radius); 
+      border:1px solid rgba(255,255,255,0.05); box-shadow:var(--shadow-card);
+      position:relative; overflow:hidden; animation:slideIn 0.5s ease-out;
+    }
+    .card::before{content:''; position:absolute; top:0; left:0; right:0; height:1px;
+      background:linear-gradient(90deg, transparent, rgba(33,150,243,0.2), transparent);}
+    .card:hover{transform:translateY(-4px); box-shadow:var(--shadow-hover);}
+    .card h3{margin:0 0 12px 0; font-weight:700; font-size:13px; color:var(--muted); 
+      letter-spacing:.05em; text-transform:uppercase; display:flex; align-items:center; gap:8px;}
+    .card h3 i{font-size:16px; color:var(--accent-2);}
+    .metric{font-size:32px; font-weight:800; line-height:1.2; background:var(--gradient-primary);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;}
+    .metric.badge{display:inline-flex; align-items:center; gap:10px; font-size:16px; 
+      padding:12px 18px; border:1px solid rgba(255,255,255,0.1); border-radius:50px; margin-top:8px;
+      background:rgba(255,255,255,0.02); backdrop-filter:blur(10px);}
+
+    .row{display:grid; grid-template-columns: 1.6fr 1fr; gap:24px}
+    @media (max-width:1100px){ .row{grid-template-columns:1fr} }
+
+    .list{display:flex; flex-direction:column; gap:16px}
+    .item{display:flex; align-items:center; justify-content:space-between; padding:16px; 
+      background:rgba(255,255,255,0.7); border-radius:14px; border:1px solid rgba(255,255,255,0.9);
+      transition:all 0.3s ease; backdrop-filter:blur(10px); box-shadow:var(--shadow-card);}
+    .item:hover{background:rgba(255,255,255,0.9); transform:translateX(4px); box-shadow:var(--shadow-hover);}
+    .item .who{font-weight:600; font-size:15px;}
+    .tag{padding:8px 14px; border-radius:20px; font-size:12px; font-weight:700; 
+      border:1px solid transparent; text-transform:uppercase; letter-spacing:0.03em;}
+    .tag.pending{color:#eab308; border-color:rgba(234,179,8,0.3); background:rgba(234,179,8,0.1);}
+    .tag.completed{color:#22c55e; border-color:rgba(34,197,94,0.3); background:rgba(34,197,94,0.1);}
+    .tag.overdue{color:#ef4444; border-color:rgba(239,68,68,0.3); background:rgba(239,68,68,0.1);}
+
+    .qa button{width:100%; padding:16px 20px; border-radius:16px; font-weight:700; 
+      border:1px solid rgba(255,255,255,0.8); background:rgba(255,255,255,0.6); 
+      color:var(--text); cursor:pointer; display:flex; align-items:center; gap:10px;
+      backdrop-filter:blur(10px); transition:all 0.3s ease; box-shadow:var(--shadow-card);}
+    .qa button:hover{background:rgba(255,255,255,0.9); transform:translateY(-2px); 
+      box-shadow:var(--shadow-hover);}
+    .qa button i{font-size:16px; color:var(--accent-2);}
+
+    /* Tables */
+    table{width:100%; border-collapse:separate; border-spacing:0 12px}
+    th{color:var(--muted); font-weight:700; text-align:left; font-size:12px; padding:0 16px; 
+      text-transform:uppercase; letter-spacing:0.05em;}
+    td{background:rgba(255,255,255,0.7); padding:16px; border:1px solid rgba(255,255,255,0.9);
+      backdrop-filter:blur(10px); transition:all 0.3s ease; box-shadow:var(--shadow-card);}
+    td:first-child{border-top-left-radius:14px; border-bottom-left-radius:14px}
+    td:last-child{border-top-right-radius:14px; border-bottom-right-radius:14px}
+    tr:hover td{background:rgba(255,255,255,0.95); transform:scale(1.01); box-shadow:var(--shadow-hover);}
+
+    .muted{color:var(--muted)}
+    .btn{padding:12px 18px; border-radius:12px; border:1px solid rgba(255,255,255,0.8); 
+      background:rgba(255,255,255,0.6); color:var(--text); font-weight:700; cursor:pointer;
+      transition:all 0.3s ease; display:inline-flex; align-items:center; gap:8px;
+      backdrop-filter:blur(10px); box-shadow:var(--shadow-card);}
+    .btn:hover{background:rgba(255,255,255,0.9); transform:translateY(-1px); 
+      box-shadow:var(--shadow-hover);}
+    .btn.primary{border-color:rgba(34,197,94,0.3); background:rgba(34,197,94,0.1); color:var(--accent);
+      box-shadow:0 0 20px rgba(34,197,94,0.1);}
+    .btn.primary:hover{background:rgba(34,197,94,0.2); box-shadow:0 0 30px rgba(34,197,94,0.2);}
+
+    .stack{display:flex; gap:16px; flex-wrap:wrap}
+    .field{display:flex; flex-direction:column; gap:8px; flex:1; min-width:200px}
+    .field label{font-weight:600; font-size:14px; color:var(--text); margin-bottom:4px;}
+    .field input, .field select{padding:14px 16px; border-radius:12px; 
+      background:rgba(255,255,255,0.8); border:1px solid rgba(255,255,255,0.9); 
+      color:var(--text); backdrop-filter:blur(10px); transition:all 0.3s ease;
+      font-size:14px; box-shadow:var(--shadow-card);}
+    .field input:focus, .field select:focus{border-color:var(--accent-2); outline:none;
+      box-shadow:0 0 0 4px rgba(33,150,243,0.1); background:rgba(255,255,255,0.95);}
+    .field input::placeholder{color:var(--muted); opacity:0.7;}
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">FL</div>
+      <h1>FOCUSED LOANS</h1>
+    </div>
+
+    <div class="section">Main</div>
+    <div class="nav">
+      <button class="active" data-page="dashboard"><i class="fas fa-chart-line"></i> Dashboard</button>
+      <button data-page="members"><i class="fas fa-users"></i> Members</button>
+      <button data-page="reports"><i class="fas fa-file-alt"></i> Reports</button>
+      <button data-page="settings"><i class="fas fa-cog"></i> Settings</button>
+    </div>
+
+    <div class="section">Quick Actions</div>
+    <div class="nav">
+      <button id="btnQuickLoan"><i class="fas fa-plus-circle"></i> Add Loan Request</button>
+      <button id="btnQuickRepay"><i class="fas fa-credit-card"></i> Record Repayment</button>
+    </div>
+  </aside>
+
+  <div>
+    <header>
+      <div class="topbar">
+        <div class="title" id="pageTitle">Dashboard</div>
+        <div class="search">
+          <i class="fas fa-search"></i>
+          <input placeholder="Search members or loans…" oninput="searchAll(this.value)" />
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- DASHBOARD -->
+      <section id="page-dashboard">
+        <div class="grid cards">
+          <div class="card">
+            <h3><i class="fas fa-coins"></i>Total Disbursed</h3>
+            <div class="metric" id="m-totalDisbursed">Ksh 0</div>
+            <div class="muted">Active loan portfolio</div>
+          </div>
+          <div class="card">
+            <h3><i class="fas fa-chart-line"></i>Interest Earned</h3>
+            <div class="metric" id="m-interest">Ksh 0</div>
+            <div class="muted">From completed loans</div>
+          </div>
+          <div class="card">
+            <h3><i class="fas fa-exclamation-triangle"></i>Overdue Loans</h3>
+            <div class="metric badge"><span id="m-overdueCount">0</span> • <span id="m-overdueAmount">Ksh 0</span></div>
+            <div class="muted">Members past due date</div>
+          </div>
+          <div class="card">
+            <h3><i class="fas fa-user-friends"></i>Active Members</h3>
+            <div class="metric" id="m-members">0</div>
+            <div class="muted">Total chama members</div>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:24px">
+          <div class="card">
+            <h3><i class="fas fa-history"></i>Recent Activity</h3>
+            <div class="list" id="recentList"></div>
+          </div>
+          <div class="card qa">
+            <h3><i class="fas fa-bolt"></i>Quick Actions</h3>
+            <div class="stack" style="margin-top:12px; flex-direction:column">
+              <button onclick="openModal('loanModal')"><i class="fas fa-plus-circle"></i>Add New Loan Request</button>
+              <button onclick="showPendingApprovals()"><i class="fas fa-clock"></i>View Pending Approvals</button>
+              <button onclick="openModal('repayModal')"><i class="fas fa-credit-card"></i>Record Repayment</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MEMBERS -->
+      <section id="page-members" style="display:none">
+        <div class="card" style="margin-bottom:24px">
+          <h3><i class="fas fa-user-plus"></i>Add Member</h3>
+          <div class="stack">
+            <div class="field"><label>Full Name</label><input id="memName" placeholder="e.g., Mary Wanjiku"></div>
+            <div class="field"><label>Phone</label><input id="memPhone" placeholder="07xx xxx xxx"></div>
+            <div class="field"><label>Group</label><input id="memGroup" placeholder="e.g., Chama A"></div>
+            <div class="field" style="align-self:end"><button class="btn primary" onclick="addMember()">Add Member</button></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3><i class="fas fa-users"></i>Members</h3>
+          <table>
+            <thead>
+              <tr><th>Name</th><th>Phone</th><th>Active Loans</th><th>Outstanding</th><th></th></tr>
+            </thead>
+            <tbody id="membersTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- REPORTS -->
+      <section id="page-reports" style="display:none">
+        <div class="card" style="margin-bottom:24px">
+          <h3><i class="fas fa-filter"></i>Filters</h3>
+          <div class="stack">
+            <div class="field"><label>Status</label>
+              <select id="repStatus" onchange="renderReports()">
+                <option value="all">All</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="completed">Completed</option>
+                <option value="overdue">Overdue</option>
+              </select>
+            </div>
+            <div class="field"><label>From</label><input type="date" id="repFrom" onchange="renderReports()"></div>
+            <div class="field"><label>To</label><input type="date" id="repTo" onchange="renderReports()"></div>
+          </div>
+        </div>
+        <div class="grid cards">
+          <div class="card"><h3><i class="fas fa-coins"></i>Total Disbursed</h3><div class="metric" id="r-total">Ksh 0</div></div>
+          <div class="card"><h3><i class="fas fa-hourglass-half"></i>Total Outstanding</h3><div class="metric" id="r-outstanding">Ksh 0</div></div>
+          <div class="card"><h3><i class="fas fa-chart-line"></i>Interest Earned</h3><div class="metric" id="r-interest">Ksh 0</div></div>
+          <div class="card"><h3><i class="fas fa-list-ol"></i>Loans Count</h3><div class="metric" id="r-count">0</div></div>
+        </div>
+        <div class="card" style="margin-top:24px">
+          <h3><i class="fas fa-table"></i>Loans</h3>
+          <table>
+            <thead>
+              <tr><th>Member</th><th>Amount</th><th>Due</th><th>Status</th><th>Repaid</th><th>Action</th></tr>
+            </thead>
+            <tbody id="reportsTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section id="page-settings" style="display:none">
+        <div class="card" style="margin-bottom:24px">
+          <h3><i class="fas fa-building"></i>Organisation Settings</h3>
+          <div class="stack" style="margin-top:8px">
+            <div class="field"><label>Chama Name</label><input id="orgName" placeholder="ChamaLoan"/></div>
+            <div class="field"><label>Currency</label><input id="orgCur" placeholder="Ksh"/></div>
+            <div class="field"><label>Default Interest (%)</label><input id="orgRate" type="number" step="0.01" placeholder="10"/></div>
+            <div class="field" style="align-self:end"><button class="btn primary" onclick="saveSettings()">Save</button></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:24px">
+          <h3><i class="fas fa-tools"></i>Management Tools</h3>
+          <div class="stack" style="margin-top:12px; flex-direction:column">
+            <button class="btn" onclick="showTransactionManager()"><i class="fas fa-edit"></i>Edit Transactions</button>
+            <button class="btn" onclick="showDeleteManager()"><i class="fas fa-trash-alt"></i>Delete Transactions</button>
+            <button class="btn" onclick="exportData()"><i class="fas fa-download"></i>Export Data</button>
+            <button class="btn" onclick="openModal('importModal')"><i class="fas fa-upload"></i>Import Data</button>
+          </div>
+        </div>
+
+        <div class="card" id="transactionManager" style="display:none">
+          <h3><i class="fas fa-edit"></i>Edit Transactions</h3>
+          <div class="stack" style="margin-bottom:16px">
+            <div class="field">
+              <label>Filter by Type</label>
+              <select id="editFilter" onchange="renderTransactionManager()">
+                <option value="all">All Transactions</option>
+                <option value="loans">Loans Only</option>
+                <option value="members">Members Only</option>
+                <option value="repayments">Repayments Only</option>
+              </select>
+            </div>
+          </div>
+          <div id="editTransactionsList"></div>
+        </div>
+
+        <div class="card" id="deleteManager" style="display:none">
+          <h3><i class="fas fa-trash-alt"></i>Delete Transactions</h3>
+          <div class="alert" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); padding:12px; border-radius:8px; margin-bottom:16px; color:var(--danger);">
+            <i class="fas fa-exclamation-triangle"></i> <strong>Warning:</strong> Deleted transactions cannot be recovered!
+          </div>
+          <div class="stack" style="margin-bottom:16px">
+            <div class="field">
+              <label>Filter by Type</label>
+              <select id="deleteFilter" onchange="renderDeleteManager()">
+                <option value="all">All Transactions</option>
+                <option value="loans">Loans Only</option>
+                <option value="members">Members Only</option>
+                <option value="activity">Activity Log</option>
+              </select>
+            </div>
+          </div>
+          <div id="deleteTransactionsList"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div id="overlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);display:none;z-index:25;animation:fadeIn 0.3s ease-out;"></div>
+
+<!-- Modal Styles -->
+<style>
+  .modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(680px,92vw);
+    display:none;z-index:30;animation:modalSlideIn 0.4s ease-out;}
+  @keyframes modalSlideIn{
+    from{opacity:0;transform:translate(-50%,-50%) scale(0.9);}
+    to{opacity:1;transform:translate(-50%,-50%) scale(1);}
+  }
+  @keyframes fadeIn{from{opacity:0} to{opacity:1}}
+  .loading{opacity:0.6;pointer-events:none;}
+  .btn.loading{position:relative;}
+  .btn.loading::after{content:'';position:absolute;right:12px;top:50%;transform:translateY(-50%);
+    width:14px;height:14px;border:2px solid currentColor;border-radius:50%;
+    border-right-color:transparent;animation:spin 0.8s linear infinite;}
+  @keyframes spin{from{transform:translateY(-50%) rotate(0deg)} to{transform:translateY(-50%) rotate(360deg)}}
+</style>
+
+<div id="loanModal" class="card modal">
+  <h3><i class="fas fa-plus-circle"></i>New Loan Request</h3>
+  <div class="stack" style="margin-top:8px">
+    <div class="field"><label>Member</label><select id="loanMember"></select></div>
+    <div class="field"><label>Amount (Ksh)</label><input type="number" id="loanAmount"/></div>
+    <div class="field"><label>Due Date</label><input type="date" id="loanDue"/></div>
+  </div>
+  <div class="stack" style="margin-top:12px; justify-content:flex-end">
+    <button class="btn" onclick="closeModal('loanModal')">Cancel</button>
+    <button class="btn primary" onclick="createLoan()">Save</button>
+  </div>
+</div>
+
+<div id="repayModal" class="card modal">
+  <h3><i class="fas fa-credit-card"></i>Record Repayment</h3>
+  <div class="stack" style="margin-top:8px">
+    <div class="field"><label>Loan</label><select id="repLoan"></select></div>
+    <div class="field"><label>Amount (Ksh)</label><input type="number" id="repAmount"/></div>
+    <div class="field"><label>Is Interest?</label>
+      <select id="repIsInterest"><option value="no">No (Principal)</option><option value="yes">Yes (Interest)</option></select>
+    </div>
+  </div>
+  <div class="stack" style="margin-top:12px; justify-content:flex-end">
+    <button class="btn" onclick="closeModal('repayModal')">Cancel</button>
+    <button class="btn primary" onclick="recordRepayment()">Save</button>
+  </div>
+</div>
+
+<!-- Edit Loan Modal -->
+<div id="editLoanModal" class="card modal">
+  <h3><i class="fas fa-edit"></i>Edit Loan</h3>
+  <div class="stack" style="margin-top:8px">
+    <div class="field"><label>Member</label><select id="editLoanMember"></select></div>
+    <div class="field"><label>Amount (Ksh)</label><input type="number" id="editLoanAmount"/></div>
+    <div class="field"><label>Due Date</label><input type="date" id="editLoanDue"/></div>
+    <div class="field"><label>Status</label>
+      <select id="editLoanStatus">
+        <option value="pending">Pending</option>
+        <option value="approved">Approved</option>
+        <option value="completed">Completed</option>
+        <option value="overdue">Overdue</option>
+      </select>
+    </div>
+    <div class="field"><label>Repaid Amount (Ksh)</label><input type="number" id="editLoanRepaid" step="0.01"/></div>
+    <div class="field"><label>Interest Paid (Ksh)</label><input type="number" id="editLoanInterest" step="0.01"/></div>
+  </div>
+  <input type="hidden" id="editLoanId">
+  <div class="stack" style="margin-top:12px; justify-content:flex-end">
+    <button class="btn" onclick="closeModal('editLoanModal')">Cancel</button>
+    <button class="btn primary" onclick="saveEditedLoan()">Save Changes</button>
+  </div>
+</div>
+
+<!-- Edit Member Modal -->
+<div id="editMemberModal" class="card modal">
+  <h3><i class="fas fa-user-edit"></i>Edit Member</h3>
+  <div class="stack" style="margin-top:8px">
+    <div class="field"><label>Full Name</label><input id="editMemberName"/></div>
+    <div class="field"><label>Phone</label><input id="editMemberPhone"/></div>
+    <div class="field"><label>Group</label><input id="editMemberGroup"/></div>
+  </div>
+  <input type="hidden" id="editMemberId">
+  <div class="stack" style="margin-top:12px; justify-content:flex-end">
+    <button class="btn" onclick="closeModal('editMemberModal')">Cancel</button>
+    <button class="btn primary" onclick="saveEditedMember()">Save Changes</button>
+  </div>
+</div>
+
+<!-- Import Data Modal -->
+<div id="importModal" class="card modal">
+  <h3><i class="fas fa-upload"></i>Import Data</h3>
+  <div style="margin-top:12px">
+    <div class="field">
+      <label>Select JSON file to import</label>
+      <input type="file" id="importFile" accept=".json" style="padding:8px; border:1px solid var(--border); border-radius:8px; background:var(--panel);"/>
+    </div>
+    <div class="alert" style="background:rgba(56,189,248,0.1); border:1px solid rgba(56,189,248,0.2); padding:12px; border-radius:8px; margin-top:16px; color:var(--accent-2);">
+      <i class="fas fa-info-circle"></i> <strong>Note:</strong> This will merge with existing data. Backup your data first!
+    </div>
+  </div>
+  <div class="stack" style="margin-top:16px; justify-content:flex-end">
+    <button class="btn" onclick="closeModal('importModal')">Cancel</button>
+    <button class="btn primary" onclick="importData()">Import</button>
+  </div>
+</div>
+
+<script>
+  // ---------------- API CONFIG & HELPERS ----------------
+  const API_BASE = 'http://localhost:4000/api'; // change if needed
+  let apiOnline = true;
+
+  async function api(path, opts={}){
+    try{
+      const res = await fetch(API_BASE + path, {headers:{'Content-Type':'application/json'}, ...opts});
+      if(!res.ok) throw new Error(await res.text());
+      apiOnline = true;
+      if(res.status === 204) return null;
+      return await res.json();
+    }catch(err){
+      console.warn('API offline, using local cache. Error:', err.message);
+      apiOnline = false;
+      throw err;
+    }
+  }
+
+  const fmt = (n) => 'Ksh ' + (Number(n||0)).toLocaleString();
+  const now = () => new Date().toISOString();
+
+  // ---------------- LOCAL CACHE (fallback) --------------
+  const STORE_KEY = 'chamaLoan_cache_v1';
+  function cacheGet(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY) || '{}'); }catch{ return {}; } }
+  function cacheSet(obj){ localStorage.setItem(STORE_KEY, JSON.stringify(obj)); }
+
+  // ---------------- STATE ------------------------------
+  let state = {
+    settings:{ orgName:'ChamaLoan', currency:'Ksh', defaultRate:10 },
+    members:[], loans:[], activity:[]
+  };
+
+  // ---------------- SYNC FROM API ----------------------
+  async function syncAll(){
+    // Try API first
+    try{
+      const [members, loans, activity] = await Promise.all([
+        api('/members'), api('/loans'), api('/activity')
+      ]);
+      state.members = members; state.loans = loans; state.activity = activity;
+      cacheSet({members, loans, activity});
+    }catch{
+      // Fallback to cache or seed
+      const c = cacheGet();
+      if(c.members){ state.members = c.members; state.loans = c.loans||[]; state.activity = c.activity||[]; }
+      if(!state.members.length){ // seed minimal demo
+        state.members = [
+          {id:'m1', name:'Mary Wanjiku', phone:'0712 111 111', group:'Chama A'},
+          {id:'m2', name:'John Kiprotich', phone:'0722 222 222', group:'Chama A'},
+          {id:'m3', name:'Grace Muthoni', phone:'0733 333 333', group:'Chama B'}
+        ];
+        state.loans = [
+          {id:'l1', memberId:'m1', amount:15000, due:'2024-02-15', status:'pending', createdAt: now(), repaid:0, interestPaid:0},
+          {id:'l2', memberId:'m2', amount:12000, due:'2024-01-31', status:'completed', createdAt: now(), repaid:12000, interestPaid:500},
+          {id:'l3', memberId:'m3', amount:8000,  due:'2024-01-10', status:'overdue', createdAt: now(), repaid:0, interestPaid:0}
+        ];
+        state.activity = [
+          {t: now(), text:'Mary Wanjiku requested a loan of Ksh 15,000', tag:'pending'},
+          {t: now(), text:'John Kiprotich repaid Ksh 12,000', tag:'completed'},
+          {t: now(), text:'Grace Muthoni loan overdue Ksh 8,000', tag:'overdue'}
+        ];
+        cacheSet({members:state.members, loans:state.loans, activity:state.activity});
+      }
+    }
+  }
+
+  // ---------------- NAVIGATION -------------------------
+  const pages = ['dashboard','members','reports','settings'];
+  document.querySelectorAll('.nav button[data-page]').forEach(btn=>{
+    btn.onclick = ()=> showPage(btn.dataset.page);
+  });
+  function showPage(name){
+    pages.forEach(p=>{
+      document.getElementById('page-'+p).style.display = (p===name)?'block':'none';
+      document.querySelector(`.nav button[data-page="${p}"]`).classList.toggle('active', p===name);
+    });
+    document.getElementById('pageTitle').textContent = name.charAt(0).toUpperCase()+name.slice(1);
+    if(name==='members') renderMembers();
+    if(name==='reports') renderReports();
+    if(name==='dashboard') renderDashboard();
+  }
+
+  // ---------------- DASHBOARD --------------------------
+  async function renderDashboard(){
+    // metrics from API summary when online
+    try{
+      const s = await api('/summary');
+      document.getElementById('m-members').textContent = s.members;
+      document.getElementById('m-totalDisbursed').textContent = fmt(s.totalDisbursed);
+      document.getElementById('m-interest').textContent = fmt(s.interest);
+      document.getElementById('m-overdueCount').textContent = s.overdueCount;
+      document.getElementById('m-overdueAmount').textContent = fmt(s.overdueAmt);
+    }catch{
+      // fallback compute locally
+      document.getElementById('m-members').textContent = state.members.length;
+      const approved = state.loans.filter(l=>['approved','completed','overdue'].includes(l.status));
+      const totalDisbursed = approved.reduce((s,l)=>s+l.amount,0);
+      document.getElementById('m-totalDisbursed').textContent = fmt(totalDisbursed);
+      const interest = state.loans.reduce((s,l)=>s+l.interestPaid,0);
+      document.getElementById('m-interest').textContent = fmt(interest);
+      const overdue = state.loans.filter(l=>l.status==='overdue');
+      document.getElementById('m-overdueCount').textContent = overdue.length;
+      const overdueAmt = overdue.reduce((s,l)=> s + Math.max(0,(l.amount - (l.repaid||0))), 0);
+      document.getElementById('m-overdueAmount').textContent = fmt(overdueAmt);
+    }
+
+    // recent activity
+    try{
+      const activity = await api('/activity');
+      state.activity = activity;
+    }catch{}
+    const list = document.getElementById('recentList');
+    list.innerHTML = '';
+    state.activity.slice(-6).reverse().forEach(a=>{
+      const div = document.createElement('div');
+      div.className = 'item';
+      const date = new Date(a.t || a.date || Date.now()).toLocaleDateString();
+      div.innerHTML = `<div><div class="who">${a.text || a.description}</div><div class="muted" style="font-size:12px">${date}</div></div><div class="tag ${a.tag || a.status}">${a.tag || a.status || ''}</div>`;
+      list.appendChild(div);
+    });
+  }
+
+  function showPendingApprovals(){
+    showPage('reports');
+    document.getElementById('repStatus').value = 'pending';
+    renderReports();
+  }
+
+  // ---------------- MEMBERS ----------------------------
+  async function addMember(){
+    const name = document.getElementById('memName').value.trim();
+    const phone = document.getElementById('memPhone').value.trim();
+    const group = document.getElementById('memGroup').value.trim();
+    if(!name) return alert('Enter member name');
+    if(apiOnline){
+      try{
+        await api('/members', {method:'POST', body:JSON.stringify({name, phone, group})});
+      }catch(err){ return alert('Failed to add member: '+err.message); }
+    }else{
+      const id = 'm'+Math.random().toString(36).slice(2,8);
+      state.members.push({id,name,phone,group});
+      state.activity.push({t:now(), text:`${name} added as a member`, tag:'completed'});
+      cacheSet({members:state.members, loans:state.loans, activity:state.activity});
+    }
+    document.getElementById('memName').value=''; document.getElementById('memPhone').value=''; document.getElementById('memGroup').value='';
+    await syncAll(); renderMembers(); renderDashboard();
+  }
+
+  function memberLoans(id){ return state.loans.filter(l=>l.memberId===id && ['approved','completed','overdue'].includes(l.status)); }
+
+  function memberById(id){ return state.members.find(m=>m.id===id) || {name:'Unknown'}; }
+
+  async function renderMembers(){
+    // ensure data fresh
+    await syncAll();
+    const tb = document.getElementById('membersTable'); tb.innerHTML='';
+    state.members.forEach(m=>{
+      const loans = memberLoans(m.id);
+      const outstanding = loans.reduce((s,l)=> s + Math.max(0, (l.amount||0) - (l.repaid||0)), 0);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${m.name}</td>
+        <td class="muted">${m.phone||'-'}</td>
+        <td>${loans.length}</td>
+        <td>${fmt(outstanding)}</td>
+        <td class="stack">
+          <button class="btn" onclick="openLoanFor('${m.id}')">New Loan</button>
+          <button class="btn" onclick="editMember('${m.id}')"><i class="fas fa-edit"></i></button>
+          <button class="btn" onclick="deleteMember('${m.id}')" style="color:var(--danger); border-color:rgba(239,68,68,0.3);"><i class="fas fa-trash"></i></button>
+        </td>`;
+      tb.appendChild(tr);
+    });
+    // populate selects
+    const sel = document.getElementById('loanMember');
+    sel.innerHTML = state.members.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
+    const sel2 = document.getElementById('repLoan');
+    sel2.innerHTML = state.loans.filter(l=>['approved','overdue'].includes(l.status))
+      .map(l=>`<option value="${l.id}">${memberById(l.memberId).name} • ${fmt(l.amount)} • Due ${l.due}</option>`).join('');
+  }
+
+  function openLoanFor(memberId){
+    openModal('loanModal');
+    document.getElementById('loanMember').value = memberId;
+  }
+
+  // ---------------- REPORTS ----------------------------
+  function inRange(d, from, to){ if(from && d < from) return false; if(to && d > to) return false; return true; }
+
+  async function renderReports(){
+    await syncAll();
+    const status = document.getElementById('repStatus').value;
+    const from = document.getElementById('repFrom').value || null;
+    const to = document.getElementById('repTo').value || null;
+    let loans = state.loans.slice();
+    if(status!=='all') loans = loans.filter(l=>l.status===status);
+    if(from||to) loans = loans.filter(l=> inRange(l.due, from, to));
+
+    const total = loans.reduce((s,l)=> s + (l.amount||0), 0);
+    const outstanding = loans.reduce((s,l)=> s + Math.max(0, (l.amount||0) - (l.repaid||0)), 0);
+    const interest = loans.reduce((s,l)=> s + (l.interestPaid||0), 0);
+
+    document.getElementById('r-total').textContent = fmt(total);
+    document.getElementById('r-outstanding').textContent = fmt(outstanding);
+    document.getElementById('r-interest').textContent = fmt(interest);
+    document.getElementById('r-count').textContent = loans.length;
+
+    const tb = document.getElementById('reportsTable'); tb.innerHTML='';
+    loans.forEach(l=>{
+      const tr = document.createElement('tr');
+      const actionBtn = l.status==='pending' ? `<button class="btn" onclick="approveLoan('${l.id}')">Approve</button>` : '';
+      tr.innerHTML = `
+        <td>${memberById(l.memberId).name}</td>
+        <td>${fmt(l.amount)}</td>
+        <td>${l.due}</td>
+        <td><span class="tag ${l.status}">${l.status}</span></td>
+        <td>${fmt(l.repaid||0)} (+${fmt(l.interestPaid||0)} int)</td>
+        <td class="stack">
+          ${actionBtn}
+          ${l.status !== 'pending' ? `<button class="btn" onclick="editLoan('${l.id}')"><i class="fas fa-edit"></i></button>` : ''}
+          <button class="btn" onclick="deleteLoan('${l.id}')" style="color:var(--danger); border-color:rgba(239,68,68,0.3);"><i class="fas fa-trash"></i></button>
+        </td>`;
+      tb.appendChild(tr);
+    });
+  }
+
+  // ---------------- ACTIONS ----------------------------
+  async function createLoan(){
+    const memberId = document.getElementById('loanMember').value;
+    const amount = Number(document.getElementById('loanAmount').value);
+    const due = document.getElementById('loanDue').value;
+    if(!memberId || !amount || !due) return alert('Fill all fields');
+    
+    // Show loading state
+    const btn = document.querySelector('#loanModal .btn.primary');
+    btn.classList.add('loading');
+    btn.disabled = true;
+    
+    if(apiOnline){
+      try{
+        await api('/loans', {method:'POST', body:JSON.stringify({memberId, amount, due})});
+      }catch(err){ 
+        btn.classList.remove('loading'); btn.disabled = false;
+        return alert('Failed to create loan: '+err.message); 
+      }
+    }else{
+      const l = { id: 'l'+Math.random().toString(36).slice(2,8), memberId, amount, due, status:'pending', createdAt: now(), repaid:0, interestPaid:0 };
+      state.loans.push(l);
+      state.activity.push({t:now(), text:`${memberById(memberId).name} requested a loan of Ksh ${amount.toLocaleString()}`, tag:'pending'});
+      cacheSet({members:state.members, loans:state.loans, activity:state.activity});
+    }
+    closeModal('loanModal');
+    await syncAll(); renderDashboard(); renderReports(); renderMembers();
+    
+    // Remove loading state
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+
+  async function approveLoan(id){
+    if(apiOnline){
+      try{ await api(`/loans/${id}/approve`, {method:'POST'}); }
+      catch(err){ return alert('Failed to approve loan: '+err.message); }
+    }else{
+      const l = state.loans.find(x=>x.id===id); if(!l) return;
+      l.status = 'approved';
+      state.activity.push({t:now(), text:`Loan ${id} approved for ${memberById(l.memberId).name}`, tag:'completed'});
+      cacheSet({members:state.members, loans:state.loans, activity:state.activity});
+    }
+    await syncAll(); renderReports(); renderDashboard();
+  }
+
+  async function recordRepayment(){
+    const loanId = document.getElementById('repLoan').value;
+    const amount = Number(document.getElementById('repAmount').value);
+    const isInt = document.getElementById('repIsInterest').value==='yes';
+    if(!loanId || !amount) return alert('Fill all fields');
+    
+    // Show loading state
+    const btn = document.querySelector('#repayModal .btn.primary');
+    btn.classList.add('loading');
+    btn.disabled = true;
+    
+    if(apiOnline){
+      try{ await api('/repayments', {method:'POST', body:JSON.stringify({loanId, amount, isInterest:isInt})}); }
+      catch(err){ return alert('Failed to record repayment: '+err.message); }
+    }else{
+      const l = state.loans.find(x=>x.id===loanId); if(!l) return;
+      if(isInt){ l.interestPaid = (l.interestPaid||0) + amount; }
+      else { l.repaid = (l.repaid||0) + amount; if(l.repaid >= l.amount) l.status='completed'; }
+      state.activity.push({t:now(), text:`${memberById(l.memberId).name} repaid Ksh ${amount.toLocaleString()}`, tag:'completed'});
+      cacheSet({members:state.members, loans:state.loans, activity:state.activity});
+    }
+    closeModal('repayModal');
+    await syncAll(); renderDashboard(); renderReports(); renderMembers();
+    
+    // Remove loading state
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+
+  // ---------------- SETTINGS ---------------------------
+  function saveSettings(){
+    state.settings.orgName = document.getElementById('orgName').value || state.settings.orgName;
+    state.settings.currency = document.getElementById('orgCur').value || state.settings.currency;
+    state.settings.defaultRate = Number(document.getElementById('orgRate').value || state.settings.defaultRate);
+    // settings are local-only for now
+    alert('Settings Saved Successfully!');
+  }
+
+  // ---------------- EDIT FUNCTIONALITY ----------------
+  function showTransactionManager(){
+    document.getElementById('transactionManager').style.display = 'block';
+    document.getElementById('deleteManager').style.display = 'none';
+    renderTransactionManager();
+  }
+
+  function renderTransactionManager(){
+    const filter = document.getElementById('editFilter').value;
+    const container = document.getElementById('editTransactionsList');
+    container.innerHTML = '';
+
+    if(filter === 'all' || filter === 'loans'){
+      const loansSection = document.createElement('div');
+      loansSection.innerHTML = `<h4><i class="fas fa-coins"></i> Loans</h4>`;
+      const loansList = document.createElement('div');
+      loansList.className = 'list';
+      
+      state.loans.forEach(loan => {
+        const item = document.createElement('div');
+        item.className = 'item';
+        item.innerHTML = `
+          <div>
+            <div class="who">${memberById(loan.memberId).name} - ${fmt(loan.amount)}</div>
+            <div class="muted" style="font-size:12px">Due: ${loan.due} | Status: ${loan.status}</div>
+          </div>
+          <button class="btn" onclick="editLoan('${loan.id}')"><i class="fas fa-edit"></i> Edit</button>
+        `;
+        loansList.appendChild(item);
+      });
+      loansSection.appendChild(loansList);
+      container.appendChild(loansSection);
+    }
+
+    if(filter === 'all' || filter === 'members'){
+      const membersSection = document.createElement('div');
+      membersSection.innerHTML = `<h4 style="margin-top:20px"><i class="fas fa-users"></i> Members</h4>`;
+      const membersList = document.createElement('div');
+      membersList.className = 'list';
+      
+      state.members.forEach(member => {
+        const item = document.createElement('div');
+        item.className = 'item';
+        item.innerHTML = `
+          <div>
+            <div class="who">${member.name}</div>
+            <div class="muted" style="font-size:12px">${member.phone} | ${member.group}</div>
+          </div>
+          <button class="btn" onclick="editMember('${member.id}')"><i class="fas fa-edit"></i> Edit</button>
+        `;
+        membersList.appendChild(item);
+      });
+      membersSection.appendChild(membersList);
+      container.appendChild(membersSection);
+    }
+  }
+
+  function editLoan(loanId){
+    const loan = state.loans.find(l => l.id === loanId);
+    if(!loan) return;
+
+    // Populate edit form
+    document.getElementById('editLoanId').value = loan.id;
+    document.getElementById('editLoanMember').innerHTML = state.members.map(m=>`<option value="${m.id}" ${m.id===loan.memberId?'selected':''}>${m.name}</option>`).join('');
+    document.getElementById('editLoanAmount').value = loan.amount;
+    document.getElementById('editLoanDue').value = loan.due;
+    document.getElementById('editLoanStatus').value = loan.status;
+    document.getElementById('editLoanRepaid').value = loan.repaid || 0;
+    document.getElementById('editLoanInterest').value = loan.interestPaid || 0;
+    
+    openModal('editLoanModal');
+  }
+
+  async function saveEditedLoan(){
+    const loanId = document.getElementById('editLoanId').value;
+    const memberId = document.getElementById('editLoanMember').value;
+    const amount = Number(document.getElementById('editLoanAmount').value);
+    const due = document.getElementById('editLoanDue').value;
+    const status = document.getElementById('editLoanStatus').value;
+    const repaid = Number(document.getElementById('editLoanRepaid').value) || 0;
+    const interestPaid = Number(document.getElementById('editLoanInterest').value) || 0;
+
+    if(!memberId || !amount || !due) return alert('Fill all required fields');
+
+    const loan = state.loans.find(l => l.id === loanId);
+    if(!loan) return alert('Loan not found');
+
+    // Update loan
+    loan.memberId = memberId;
+    loan.amount = amount;
+    loan.due = due;
+    loan.status = status;
+    loan.repaid = repaid;
+    loan.interestPaid = interestPaid;
+
+    // Add activity log
+    state.activity.push({t:now(), text:`Loan ${loanId} updated by admin`, tag:'completed'});
+    cacheSet({members:state.members, loans:state.loans, activity:state.activity});
+
+    closeModal('editLoanModal');
+    await syncAll(); renderDashboard(); renderReports(); renderMembers();
+    alert('Loan updated successfully!');
+  }
+
+  function editMember(memberId){
+    const member = state.members.find(m => m.id === memberId);
+    if(!member) return;
+
+    // Populate edit form
+    document.getElementById('editMemberId').value = member.id;
+    document.getElementById('editMemberName').value = member.name;
+    document.getElementById('editMemberPhone').value = member.phone || '';
+    document.getElementById('editMemberGroup').value = member.group || '';
+    
+    openModal('editMemberModal');
+  }
+
+  async function saveEditedMember(){
+    const memberId = document.getElementById('editMemberId').value;
+    const name = document.getElementById('editMemberName').value.trim();
+    const phone = document.getElementById('editMemberPhone').value.trim();
+    const group = document.getElementById('editMemberGroup').value.trim();
+
+    if(!name) return alert('Name is required');
+
+    const member = state.members.find(m => m.id === memberId);
+    if(!member) return alert('Member not found');
+
+    // Update member
+    member.name = name;
+    member.phone = phone;
+    member.group = group;
+
+    // Add activity log
+    state.activity.push({t:now(), text:`Member ${name} updated by admin`, tag:'completed'});
+    cacheSet({members:state.members, loans:state.loans, activity:state.activity});
+
+    closeModal('editMemberModal');
+    await syncAll(); renderDashboard(); renderReports(); renderMembers();
+    alert('Member updated successfully!');
+  }
+
+  // ---------------- DELETE FUNCTIONALITY --------------
+  function showDeleteManager(){
+    document.getElementById('deleteManager').style.display = 'block';
+    document.getElementById('transactionManager').style.display = 'none';
+    renderDeleteManager();
+  }
+
+  function renderDeleteManager(){
+    const filter = document.getElementById('deleteFilter').value;
+    const container = document.getElementById('deleteTransactionsList');
+    container.innerHTML = '';
+
+    if(filter === 'all' || filter === 'loans'){
+      const loansSection = document.createElement('div');
+      loansSection.innerHTML = `<h4><i class="fas fa-coins"></i> Loans</h4>`;
+      const loansList = document.createElement('div');
+      loansList.className = 'list';
+      
+      state.loans.forEach(loan => {
+        const item = document.createElement('div');
+        item.className = 'item';
+        item.innerHTML = `
+          <div>
+            <div class="who">${memberById(loan.memberId).name} - ${fmt(loan.amount)}</div>
+            <div class="muted" style="font-size:12px">Due: ${loan.due} | Status: ${loan.status}</div>
+          </div>
+          <button class="btn" onclick="deleteLoan('${loan.id}')" style="color:var(--danger); border-color:rgba(239,68,68,0.3);"><i class="fas fa-trash"></i> Delete</button>
+        `;
+        loansList.appendChild(item);
+      });
+      loansSection.appendChild(loansList);
+      container.appendChild(loansSection);
+    }
+
+    if(filter === 'all' || filter === 'members'){
+      const membersSection = document.createElement('div');
+      membersSection.innerHTML = `<h4 style="margin-top:20px"><i class="fas fa-users"></i> Members</h4>`;
+      const membersList = document.createElement('div');
+      membersList.className = 'list';
+      
+      state.members.forEach(member => {
+        const item = document.createElement('div');
+        item.className = 'item';
+        item.innerHTML = `
+          <div>
+            <div class="who">${member.name}</div>
+            <div class="muted" style="font-size:12px">${member.phone} | ${member.group}</div>
+          </div>
+          <button class="btn" onclick="deleteMember('${member.id}')" style="color:var(--danger); border-color:rgba(239,68,68,0.3);"><i class="fas fa-trash"></i> Delete</button>
+        `;
+        membersList.appendChild(item);
+      });
+      membersSection.appendChild(membersList);
+      container.appendChild(membersSection);
+    }
+
+    if(filter === 'all' || filter === 'activity'){
+      const activitySection = document.createElement('div');
+      activitySection.innerHTML = `<h4 style="margin-top:20px"><i class="fas fa-history"></i> Activity Log</h4>`;
+      const activityList = document.createElement('div');
+      activityList.className = 'list';
+      
+      state.activity.forEach((activity, index) => {
+        const item = document.createElement('div');
+        item.className = 'item';
+        item.innerHTML = `
+          <div>
+            <div class="who">${activity.text}</div>
+            <div class="muted" style="font-size:12px">${new Date(activity.t || activity.date || Date.now()).toLocaleDateString()}</div>
+          </div>
+          <button class="btn" onclick="deleteActivity(${index})" style="color:var(--danger); border-color:rgba(239,68,68,0.3);"><i class="fas fa-trash"></i> Delete</button>
+        `;
+        activityList.appendChild(item);
+      });
+      activitySection.appendChild(activityList);
+      container.appendChild(activitySection);
+    }
+  }
+
+  async function deleteLoan(loanId){
+    if(!confirm('Are you sure you want to delete this loan? This action cannot be undone!')) return;
+    
+    const loanIndex = state.loans.findIndex(l => l.id === loanId);
+    if(loanIndex === -1) return alert('Loan not found');
+    
+    const loan = state.loans[loanIndex];
+    state.loans.splice(loanIndex, 1);
+    state.activity.push({t:now(), text:`Loan deleted: ${memberById(loan.memberId).name} - ${fmt(loan.amount)}`, tag:'overdue'});
+    cacheSet({members:state.members, loans:state.loans, activity:state.activity});
+    
+    await syncAll(); renderDashboard(); renderReports(); renderMembers(); renderDeleteManager();
+    alert('Loan deleted successfully!');
+  }
+
+  async function deleteMember(memberId){
+    const memberLoansCount = state.loans.filter(l => l.memberId === memberId).length;
+    if(memberLoansCount > 0){
+      if(!confirm(`This member has ${memberLoansCount} associated loan(s). Are you sure you want to delete this member? This will also delete their loans!`)) return;
+    } else {
+      if(!confirm('Are you sure you want to delete this member? This action cannot be undone!')) return;
+    }
+    
+    const memberIndex = state.members.findIndex(m => m.id === memberId);
+    if(memberIndex === -1) return alert('Member not found');
+    
+    const member = state.members[memberIndex];
+    
+    // Delete member's loans first
+    state.loans = state.loans.filter(l => l.memberId !== memberId);
+    
+    // Delete member
+    state.members.splice(memberIndex, 1);
+    state.activity.push({t:now(), text:`Member deleted: ${member.name}`, tag:'overdue'});
+    cacheSet({members:state.members, loans:state.loans, activity:state.activity});
+    
+    await syncAll(); renderDashboard(); renderReports(); renderMembers(); renderDeleteManager();
+    alert('Member deleted successfully!');
+  }
+
+  function deleteActivity(index){
+    if(!confirm('Are you sure you want to delete this activity log entry?')) return;
+    
+    state.activity.splice(index, 1);
+    cacheSet({members:state.members, loans:state.loans, activity:state.activity});
+    renderDeleteManager(); renderDashboard();
+    alert('Activity log entry deleted!');
+  }
+
+  // ---------------- DATA EXPORT/IMPORT -----------------
+  function exportData(){
+    const data = {
+      settings: state.settings,
+      members: state.members,
+      loans: state.loans,
+      activity: state.activity,
+      exportDate: now()
+    };
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chamaloan-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    alert('Data exported successfully!');
+  }
+
+  function importData(){
+    const fileInput = document.getElementById('importFile');
+    const file = fileInput.files[0];
+    
+    if(!file) return alert('Please select a file to import');
+    
+    const reader = new FileReader();
+    reader.onload = function(e){
+      try{
+        const data = JSON.parse(e.target.result);
+        
+        if(data.members) state.members = [...state.members, ...data.members];
+        if(data.loans) state.loans = [...state.loans, ...data.loans];
+        if(data.activity) state.activity = [...state.activity, ...data.activity];
+        if(data.settings) state.settings = {...state.settings, ...data.settings};
+        
+        cacheSet({members:state.members, loans:state.loans, activity:state.activity});
+        closeModal('importModal');
+        
+        syncAll().then(() => {
+          renderDashboard(); renderReports(); renderMembers();
+          alert('Data imported successfully!');
+        });
+        
+      } catch(error){
+        alert('Invalid file format. Please select a valid JSON backup file.');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // ---------------- SEARCH -----------------------------
+  function searchAll(q){ q=(q||'').toLowerCase();
+    const matchMember = state.members.filter(m=> m.name.toLowerCase().includes(q));
+    const matchLoans = state.loans.filter(l=> memberById(l.memberId).name.toLowerCase().includes(q));
+    if(matchMember.length){ showPage('members'); }
+    if(matchLoans.length){ showPage('reports'); }
+  }
+
+  // ---------------- MODALS -----------------------------
+  function openModal(id){ 
+    document.getElementById('overlay').style.display='block'; 
+    document.getElementById(id).style.display='block';
+    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    renderMembers(); 
+  }
+  function closeModal(id){ 
+    document.getElementById('overlay').style.display='none'; 
+    document.getElementById(id).style.display='none'; 
+    document.body.style.overflow = 'auto';
+    
+    // Clear form inputs
+    document.getElementById(id).querySelectorAll('input, select').forEach(input => {
+      if(input.type !== 'date') input.value = '';
+    });
+  }
+  document.getElementById('overlay').onclick = ()=> { 
+    closeModal('loanModal'); closeModal('repayModal'); closeModal('editLoanModal'); 
+    closeModal('editMemberModal'); closeModal('importModal'); 
+  };
+  document.getElementById('btnQuickLoan').onclick = ()=> openModal('loanModal');
+  document.getElementById('btnQuickRepay').onclick = ()=> openModal('repayModal');
+
+  // ---------------- INIT --------------------------------
+  async function init(){
+    await syncAll();
+    hydrateSettings();
+    await renderDashboard();
+    await renderMembers();
+    showPage('dashboard');
+  }
+  function hydrateSettings(){
+    document.getElementById('orgName').value = state.settings.orgName;
+    document.getElementById('orgCur').value = state.settings.currency;
+    document.getElementById('orgRate').value = state.settings.defaultRate;
+  }
+  init();
+</script>
+</body>
+</html>
